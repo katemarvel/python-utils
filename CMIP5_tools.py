@@ -40,6 +40,10 @@ else:
 #                     File management functions                #
 #                                                              #
 ################################################################
+def start_time(data):
+    return data.getTime().asComponentTime()[0]
+def stop_time(data):
+    return data.getTime().asComponentTime()[0]
 def get_plottable_time(X):
     years = [x.year+(x.month-1)/12. for x in X.getTime().asComponentTime()]
     return np.array(years)
