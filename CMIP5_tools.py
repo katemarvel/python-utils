@@ -188,7 +188,7 @@ def multimodel_average(direc,variable,*args,**kwargs):
     func = kwargs.pop("func",boring)
    
     #All files in the directory that match the criteria
-    allfiles = sorted(np.array(glob.glob(direc+search_string)))
+    allfiles = np.array(glob.glob(direc+search_string))
     models = np.unique([x.split(".")[1] for x in allfiles])
     ensemble_dictionary={}
     for model in sorted(models):
@@ -213,7 +213,8 @@ def multimodel_average(direc,variable,*args,**kwargs):
     effective_models = sorted(ensemble_dictionary.keys())
     nmod = len(effective_models)
     #get the shape of the thing we're averaging
-    f = cdms.open(allfiles[0])
+    testfile = sorted(ensemble_dictionary["CCSM4"])[0] #Assume CCSM4 r1 will have the representative shape
+    f = cdms.open(testfile)
     test = func(f(variable),*args,**kwargs)
     data_shape = test.shape
     data_axes = test.getAxisList()
