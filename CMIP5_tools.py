@@ -188,7 +188,7 @@ def multimodel_average(direc,variable,*args,**kwargs):
     func = kwargs.pop("func",boring)
    
     #All files in the directory that match the criteria
-    allfiles = np.array(glob.glob(direc+search_string))
+    allfiles = sorted(np.array(glob.glob(direc+search_string)))
     models = np.unique([x.split(".")[1] for x in allfiles])
     ensemble_dictionary={}
     for model in sorted(models):
