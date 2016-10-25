@@ -266,14 +266,16 @@ def label_theta_ticks(ax):
     ax.set_xticks(monthstarts)
     ax.set_xticklabels(months)
 
-def latitude_label_ticks(ax):
+def latitude_label_ticks(ax,axis='x'):
     latlabels=[]
-    for lat in ax.get_xticks():
+    func = getattr(ax,"get_"+axis+"ticks")
+    for lat in func():
         if lat <0:
             latlabels +=[str(int(-1*lat))+r'$^{\circ}$S']
         elif lat ==0:
             latlabels +=[str(int(lat))+r'$^{\circ}$']
         else:
             latlabels +=[str(int(lat))+r'$^{\circ}$N']
-    ax.set_xticklabels(latlabels)
+    func2=getattr(ax,"set_"+axis+"ticklabels")
+    func2(latlabels)
     
