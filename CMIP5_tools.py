@@ -181,7 +181,7 @@ def get_datafiles(forcing,variable):
 
 def boring(x):
     return x   
-def multimodel_average(direc,variable,*args,**kwargs):
+def multimodel_average(direc,variable,*args,**kwargs,verbose=False):
     """multimodel average over all files in directory that match search string (default *).  Apply func to data (default identity)"""
     #default values:
     search_string = kwargs.pop("search_string","*")
@@ -214,12 +214,15 @@ def multimodel_average(direc,variable,*args,**kwargs):
     nmod = len(effective_models)
     #get the shape of the thing we're averaging
     testfile = sorted(ensemble_dictionary["CCSM4"])[0] #Assume CCSM4 r1 will have the representative shape
+    
     f = cdms.open(testfile)
     test = func(f(variable),*args,**kwargs)
     data_shape = test.shape
     data_axes = test.getAxisList()
     
     MMA = MV.zeros((nmod,)+data_shape)+1.e20
+    if verbose:
+        print "MMA shape will be "+str(MMA.shape)
     f.close()
     #Now average over each ensemble
     for i in range(nmod):
@@ -292,3 +295,15 @@ def stop_time(data):
 def get_plottable_time(X):
     years = [x.year+(x.month-1)/12. for x in X.getTime().asComponentTime()]
     return np.array(years)
+def time_anomalies(data,start=None,stop=None):
+    taxis = data.getAxisIds().index('time')
+    if start is None:
+        start = start_time(data)
+    if stop is None:
+        stop = stop_time(data)
+    clim = MV.average(data(time=(start,stop)),axis=taxis)
+    clim_exp  = np.ma.expand_dims(clim.asma(),taxis)
+    anom=cdms_clone(data.asma()-clim_exp,data)
+    return anom
+    
+    
