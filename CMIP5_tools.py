@@ -181,11 +181,12 @@ def get_datafiles(forcing,variable):
 
 def boring(x):
     return x   
-def multimodel_average(direc,variable,*args,**kwargs,verbose=False):
+def multimodel_average(direc,variable,*args,**kwargs):
     """multimodel average over all files in directory that match search string (default *).  Apply func to data (default identity)"""
     #default values:
     search_string = kwargs.pop("search_string","*")
     func = kwargs.pop("func",boring)
+    verbose = kwargs.pop("verbose",False)
    
     #All files in the directory that match the criteria
     allfiles = np.array(glob.glob(direc+search_string))
