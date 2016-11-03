@@ -44,7 +44,7 @@ else:
 
 
 def get_latest_version(listoffiles):
-    """ on crunchy: find the latest version """
+    """ on crunchy: find the latest version of a list of files. Returns single file. """
     version_numbers = map(lambda x: x.split("ver-")[-1].split(".")[0], listoffiles)
     enums = []
     for num in version_numbers:
@@ -56,6 +56,18 @@ def get_latest_version(listoffiles):
     
     i = np.argmax(enums)
     return listoffiles[i]
+
+
+def only_most_recent(allfiles_nover):
+    #version control: take only the newest version of each file in a list of files (on crunchy)
+    allfiles = []
+    uniq=np.unique([x.split(".ver")[0] for x in allfiles_nover])
+    for stem in uniq:
+        fnames = glob.glob(stem+"*")
+        allfiles+=[get_latest_version(fnames)]
+    return allfiles
+
+
 
 def cdms_clone(X,Y):
     X = MV.array(X)
@@ -259,7 +271,11 @@ def get_ensemble(direc,variable,*args,**kwargs):
     func = kwargs.pop("func",boring)
    
     #All files in the directory that match the criteria
-    allfiles = np.array(glob.glob(direc+search_string))
+    allfiles_nover = np.array(sorted(glob.glob(direc+search_string)))
+
+    #version control: take only the newest 
+    allfiles =  only_most_recent(allfiles_nover)
+   
     nfiles = len(allfiles)
 
     #Get the shape 
