@@ -140,11 +140,11 @@ def get_orientation(solver):
     return fac
 
 def get_nearest_latitude_index(Z,lat):
-    lats = Z.getLatitude()
+    lats = Z.getLatitude()[:]
     return np.argmin(np.abs(lats-lat))
 
 def get_nearest_latitude(Z,lat):
-    lats = Z.getLatitude()
+    lats = Z.getLatitude()[:]
     return Z[np.argmin(np.abs(lats-lat))]
 
 class HistoricalMisc():
