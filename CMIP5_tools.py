@@ -4,6 +4,7 @@ import glob
 import sys
 import os
 import numpy as np
+import string
 
 
 ### Import things from cdutil
@@ -70,6 +71,7 @@ def only_most_recent(allfiles_nover):
 
 
 def cdms_clone(X,Y):
+    """X is a numpy array, Y is a MV array.  Transform X into an MV array and give it all the attributes of Y"""
     X = MV.array(X)
     X.setAxisList(Y.getAxisList())
     for key in Y.attributes.keys():
@@ -137,6 +139,13 @@ def get_orientation(solver):
     fac = float(np.sign(genutil.statistics.linearregression(pc1,nointercept=1)))
     return fac
 
+def get_nearest_latitude_index(Z,lat):
+    lats = Z.getLatitude()
+    return np.argmin(np.abs(lats-lat))
+
+def get_nearest_latitude(Z,lat):
+    lats = Z.getLatitude()
+    return Z[np.argmin(np.abs(lats-lat))]
 
 class HistoricalMisc():
     """ Single-forcing simulations """
@@ -324,3 +333,31 @@ def time_anomalies(data,start=None,stop=None):
     return anom
     
     
+
+def clim_sens(model,verbose=False):
+    """ get the climate sensitivity"""
+    curdir=__file__.split("CMIP5_tools.py")[0]
+    cs = open(curdir+"clim_sens.txt")
+    lns = cs.readlines()
+    cs.close()
+    models = np.array([string.lower(x.split("\t")[0]).replace("_","-") for x in lns[2:]])
+    
+    sens = [x.split("\t")[2].split("\n")[0] for x in lns[2:]]
+    
+    i = np.argwhere(models == string.lower(model))
+    if len(i)==1:
+        i=i[0]
+        if sens[i]!="":
+            if verbose:
+                print "ECS for "+model+" is "+str( float(sens[i])/2.)
+            
+            return float(sens[i])/2.
+        else:
+            if verbose:
+                print "No ECS found for "+model
+            return np.nan
+    else:
+        if verbose:
+            print "More than one match for "+model
+            print "Choose one of "+str(models[i])
+        return np.nan
