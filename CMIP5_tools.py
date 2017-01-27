@@ -235,7 +235,10 @@ def multimodel_average(direc,variable,*args,**kwargs):
     effective_models = sorted(ensemble_dictionary.keys())
     nmod = len(effective_models)
     #get the shape of the thing we're averaging
-    testfile = sorted(ensemble_dictionary["CCSM4"])[0] #Assume CCSM4 r1 will have the representative shape
+    try:
+        testfile = sorted(ensemble_dictionary["CCSM4"])[0] #Assume CCSM4 r1 will have the representative shape
+    except:
+        testfile = sorted(ensemble_dictionary["MIROC5"])[0] #try miroc
     
     f = cdms.open(testfile)
     test = func(f(variable),*args,**kwargs)
