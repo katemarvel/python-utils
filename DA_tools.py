@@ -31,14 +31,35 @@ cdms.setNetcdfShuffleFlag(0)
 cdms.setNetcdfDeflateFlag(0)
 cdms.setNetcdfDeflateLevelFlag(0)
 
-def concatenate_this(piC):
-    nmodc,ntc,nlatc=piC.shape
-    piC_concatenate = piC.reshape((nmodc*ntc,nlatc))
+def concatenate_this(piC,modaxis=0):
+    if not ("time" in piC.getAxisIds()):
+        print "Need a time axis to concatenate along"
+        raise TypeError
+    
+    naxes = len(piC.shape)
+    timeaxis = piC.getAxisIds().index("time")
+    dimensions=piC.shape
+    nmodc = dimensions[modaxis]
+    ntc = dimensions[timeaxis]
+    newdim = (nmodc*ntc,)
+    
     tax = cdms.createAxis(np.arange(0,nmodc*ntc*365,365)+15.5)
     tax.units = 'days since 0001-1-1'
     tax.id = "time"
     tax.designateTime()
-    piC_concatenate.setAxis(0,tax)
+    newaxes = [tax]
+    if len(dimensions)>2:
+       
+        for i in range(len(dimensions)):
+            if (i != timeaxis) and (i!= modaxis):
+    
+                newdim+=(dimensions[i],)
+                newaxes+=[piC.getAxis(i)]
+    
+    piC_concatenate = piC.reshape(newdim)
+    
+    piC_concatenate.setAxisList(newaxes)
+    
     return piC_concatenate
 
 def get_slopes(c,yrs,plot = False):
@@ -78,6 +99,9 @@ def get_orientation(solver):
 
 def fit_normals_to_data(C,**kwargs):
     a = kwargs.pop("a",None)
+    ax = kwargs.pop("ax",None)
+    if ax is None:
+        ax=plt.gca()
     if a is None:
         a = np.max(C)
         a = a + 0.5*a
@@ -88,4 +112,4 @@ def fit_normals_to_data(C,**kwargs):
     sigc = np.ma.std(C)
     fac = 1./sigc
     pdfc = mlab.normpdf(xc,muc,sigc)
-    plt.plot(xc,pdfc,**kwargs)
+    ax.plot(xc,pdfc,**kwargs)
