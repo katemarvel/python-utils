@@ -191,7 +191,7 @@ def get_datafiles(forcing,variable):
     else:
         experiment = forcing
         search_strings = ["*"]
-    direc = "/work/cmip5/"+experiment+"/atm/mo/pr/"
+    direc = "/work/cmip5/"+experiment+"/atm/mo/"+variable+"/"
     fnames = []
     for search_string in search_strings:
         candidates = glob.glob(direc+search_string)
@@ -258,6 +258,8 @@ def multimodel_average(direc,variable,*args,**kwargs):
         for j in range(nens):
             try:
                 f = cdms.open(ensemble[j])
+                if verbose:
+                    print ensemble[i]
                 ENS[j]=func(f(variable),*args,**kwargs)
                 f.close()
             except:
