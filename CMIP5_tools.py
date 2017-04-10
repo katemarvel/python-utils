@@ -1,4 +1,3 @@
-
 ### Import the usual suspects
 import glob
 import sys
@@ -366,3 +365,16 @@ def clim_sens(model,verbose=False):
             print "More than one match for "+model
             print "Choose one of "+str(models[i])
         return np.nan
+
+
+def make_model_axis(listoffiles,just_modelnames = False):
+    ax = cdms.createAxis(range(len(listoffiles)))
+    ax.id = "model"
+    ax.name="model"
+    ax.long_name = "Model name"
+    if just_modelnames:
+        models = np.unique([x.split(".")[1] for x in listoffiles]).tolist()
+    else:
+        models = listoffiles
+    ax.models = str(models)
+    return ax
