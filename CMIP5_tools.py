@@ -410,7 +410,7 @@ def landfrac(fname):
     if len(candidates)>0:
         return get_latest_version(candidates)
     else:
-        print "no exact match for experiment "+experiment
+       
         candidates = glob.glob(land_direc+"*"+model+".*")
         if len(candidates)>0:
             return get_latest_version(candidates)
