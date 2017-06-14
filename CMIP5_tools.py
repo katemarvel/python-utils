@@ -175,7 +175,7 @@ class HistoricalMisc():
 
         self.LU = [ "*GISS-E2-R.*r[1-5]i1p104.*", "*GISS-E2-H.*r[1-5]i1p104.*","*CCSM4*.r[1,4,6]i1p13.*", "*GFDL-ESM2M.*r1i1p6.*", "*CanESM2*r[1-5]i1p2.*"]
 
-def get_datafiles(forcing,variable):
+def get_datafiles(forcing,variable,realm="atm"):
     """ List all files on crunchy corresponding to a variable"""
     if not crunchy:
         print "Not on crunchy"
@@ -190,7 +190,7 @@ def get_datafiles(forcing,variable):
     else:
         experiment = forcing
         search_strings = ["*"]
-    direc = "/work/cmip5/"+experiment+"/atm/mo/"+variable+"/"
+    direc = "/work/cmip5/"+experiment+"/"+realm+"/mo/"+variable+"/"
     fnames = []
     for search_string in search_strings:
         candidates = glob.glob(direc+search_string)
@@ -378,3 +378,43 @@ def make_model_axis(listoffiles,just_modelnames = False):
         models = listoffiles
     ax.models = str(models)
     return ax
+
+
+
+def all_clim_sens():
+    """ get the climate sensitivity"""
+    curdir=__file__.split("CMIP5_tools.py")[0]
+    cs = open(curdir+"clim_sens.txt")
+    lns = cs.readlines()
+    cs.close()
+    models = np.array([string.lower(x.split("\t")[0]).replace("_","-") for x in lns[2:]])
+    
+    sens = [x.split("\t")[2].split("\n")[0] for x in lns[2:]]
+    thesens = []
+    for ecs in sens:
+        if ecs != "":
+            #print ecs
+            thesens += [float(ecs)/2.]
+            
+    return thesens
+
+
+def landfrac(fname):
+    model = fname.split(".")[1]
+    experiment = fname.split(".")[2]
+    if experiment == "amip":
+        if model == "CanAM4":
+            model = 'CanESM2'
+    land_direc = "/work/cmip5/fx/fx/sftlf/"
+    candidates = glob.glob(land_direc+"*"+model+".*"+experiment+".*")
+    if len(candidates)>0:
+        return get_latest_version(candidates)
+    else:
+        print "no exact match for experiment "+experiment
+        candidates = glob.glob(land_direc+"*"+model+".*")
+        if len(candidates)>0:
+            return get_latest_version(candidates)
+        else:
+            raise TypeError("Can't find matching landfrac")
+        
+        
