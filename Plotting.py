@@ -204,7 +204,7 @@ class InteractiveMap():
 
 
 from mpl_toolkits.basemap import Basemap,shiftgrid
-def bmap(X,vmin=None,vmax=None):
+def bmap(X,**kwargs):
     """ quick plot of data on a lat,lon grid """
     lon = X.getLongitude()[:]
     lat = X.getLatitude()[:]
@@ -213,10 +213,9 @@ def bmap(X,vmin=None,vmax=None):
     
         
     x,y=m(*np.meshgrid(lon,lat))
-    if vmin is None:
-        m.pcolor(x,y,X)
-    else:
-        m.pcolor(x,y,X,vmin=vmin,vmax=vmax)
+    
+    m.pcolor(x,y,X,**kwargs)
+   
     return m
 
 
@@ -256,6 +255,14 @@ def lat_plot(x,**kwargs):
     """plot a cdms zonal average"""
     lat = x.getLatitude()[:]
     plt.plot(lat,x.asma(),**kwargs)
+
+def plot_all_lats(x,**kwargs):
+    cmap = kwargs.pop("cmap",cm.RdYlBu)
+    nt = len(x.getTime())
+    for i in range(nt):
+        lat = x.getLatitude()[:]
+        plt.plot(lat,x[i].asma(),color=cmap(i/float(nt)))
+        
 def time_plot(x,**kwargs):
     """ plot a cdms time series """
     t = get_plottable_time(x)
@@ -278,4 +285,17 @@ def latitude_label_ticks(ax,axis='x'):
             latlabels +=[str(int(lat))+r'$^{\circ}$N']
     func2=getattr(ax,"set_"+axis+"ticklabels")
     func2(latlabels)
+
+def prep_for_talk(ax):
+    ax.tick_params(colors="w")
+    ax.xaxis.label.set_color("w")
+    ax.yaxis.label.set_color("w")
+    try:
+        ax.legend_.get_frame().set_alpha(0.3)
+    except:
+        print "no legend"
+    ax.title.set_color("w")
+
+    plt.draw()
+
     

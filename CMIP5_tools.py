@@ -93,10 +93,10 @@ def get_too_short(fnames,bound):
     return too_short
 
 
-def get_common_timeax(fnames):
+def get_common_timeax(fnames,user_specify_historical = False):
     """Find the end point (non-historical) or start/stop times (historical) such that all fimes in [fnames] have the same time axis.  Return an integer (non-historical) or start-stop times (historical)."""
     path = fnames[0].split("cmip5.")[0]
-    if path.find("historical")<0:
+    if ((path.find("historical")<0) and (user_specify_historical is False)):
         L = []
         #badrips = 
         for fname in fnames:
@@ -416,5 +416,24 @@ def landfrac(fname):
             return get_latest_version(candidates)
         else:
             raise TypeError("Can't find matching landfrac")
+
+def get_linear_trends(X,significance=None):
+    units = X.getTime().units
+    if units.find("day")>=0:
+        fac = 3650. # 3650 days in a decade
+    elif units.find("month")>=0:
+        fac = 120. #120 months in a decade
+    elif units.find("year")>=0:
+        fac = 10. #10 years in a decade
+    else:
+        fac = 1.
+        print "WARNING: Undetermined time units"
+    ti=X.getAxisIds().index('time')
+    if significance is None:
+        trends = genutil.statistics.linearregression(X,axis=ti,nointercept=1)*fac
+    else:
+        trends,errors,pt1,pt2,pf1,pf2 =  genutil.statistics.linearregression(X,axis=ti,nointercept=1,error=1,probability=1)
+        trends = MV.masked_where(pt1<(1.-significance),trends)*fac
+    return trends
         
         

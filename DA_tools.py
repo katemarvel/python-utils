@@ -57,6 +57,7 @@ def concatenate_this(piC,modaxis=0):
                 newaxes+=[piC.getAxis(i)]
     
     piC_concatenate = piC.reshape(newdim)
+
     
     piC_concatenate.setAxisList(newaxes)
     
