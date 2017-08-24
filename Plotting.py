@@ -18,7 +18,7 @@ from scipy.interpolate import interp1d
 from scipy.optimize import brentq,fminbound
 import scipy.ndimage as ndimag
 
-from CMIP5_tools import *
+import CMIP5_tools as cmip5
 
 ### Import plotting routines
 import matplotlib.pyplot as plt
@@ -204,38 +204,38 @@ class InteractiveMap():
 
 
 from mpl_toolkits.basemap import Basemap,shiftgrid
-def bmap(X,**kwargs):
-    """ quick plot of data on a lat,lon grid """
-    lon = X.getLongitude()[:]
-    lat = X.getLatitude()[:]
+# def bmap(X,**kwargs):
+#     """ quick plot of data on a lat,lon grid """
+#     lon = X.getLongitude()[:]
+#     lat = X.getLatitude()[:]
     
-    m = Basemap(lon_0=np.median(lon),projection="moll")
+#     m = Basemap(lon_0=np.median(lon),projection="moll")
     
         
-    x,y=m(*np.meshgrid(lon,lat))
+#     x,y=m(*np.meshgrid(lon,lat))
     
-    m.pcolor(x,y,X,**kwargs)
+#     m.pcolor(x,y,X,**kwargs)
    
-    return m
+#     return m
 
 
-def bmap_rect(X,vmin=None,vmax=None,lon_0=None):
-    """ quick plot of data on a lat,lon grid """
-    lon = X.getLongitude()[:]
-    lat = X.getLatitude()[:]
-    if lon_0 == None:
-        lon_0=0
-    X,lon = shiftgrid(180,X,lon,start=False)
-    m = Basemap(X,lon_0=lon_0)
-    #m=Basemap()
+# def bmap_rect(X,vmin=None,vmax=None,lon_0=None):
+#     """ quick plot of data on a lat,lon grid """
+#     lon = X.getLongitude()[:]
+#     lat = X.getLatitude()[:]
+#     if lon_0 == None:
+#         lon_0=0
+#     X,lon = shiftgrid(180,X,lon,start=False)
+#     m = Basemap(X,lon_0=lon_0)
+#     #m=Basemap()
     
         
-    x,y=m(*np.meshgrid(lon,lat))
-    if vmin is None:
-        m.pcolor(x,y,X)
-    else:
-        m.pcolor(x,y,X,vmin=vmin,vmax=vmax)
-    return m
+#     x,y=m(*np.meshgrid(lon,lat))
+#     if vmin is None:
+#         m.pcolor(x,y,X)
+#     else:
+#         m.pcolor(x,y,X,vmin=vmin,vmax=vmax)
+#     return m
 def cmap(X,**kwargs):
     """ quick plot of data on a lat,lon grid """
     lon = X.getLongitude()[:]
@@ -298,4 +298,59 @@ def prep_for_talk(ax):
 
     plt.draw()
 
-    
+
+def model_dictionary():
+    models = ['ACCESS1-0', 'ACCESS1-3', 'BNU-ESM','CCSM4', 'CESM1-BGC',\
+       'CESM1-CAM5', 'CESM1-FASTCHEM', 'CESM1-WACCM', 'CMCC-CESM',\
+       'CMCC-CM','CMCC-CMS', 'CNRM-CM5', 'CNRM-CM5','CNRM-CM5-2', 'CSIRO-Mk3-6-0', 'CanESM2',\
+       'FGOALS-g2', 'FGOALS-s2', 'FIO-ESM', 'GFDL-CM3', 'GFDL-ESM2G',\
+       'GFDL-ESM2M', 'GFDL-HIRAM-C180','GFDL-HIRAM-C360','GISS-E2-H*p1', 'GISS-E2-H*p3', 'GISS-E2-H-CC',\
+       'GISS-E2-R*p1', 'GISS-E2-R*p3', 'GISS-E2-R-CC', 'HadCM3',\
+       'HadGEM2-AO', 'HadGEM2-CC', 'HadGEM2-ES', 'IPSL-CM5A-LR',\
+       'IPSL-CM5A-MR', 'IPSL-CM5B-LR', 'MIROC-ESM', 'MIROC-ESM-CHEM',\
+       'MIROC4h', 'MIROC5', 'MPI-ESM-LR', 'MPI-ESM-MR', 'MPI-ESM-P',\
+       'NorESM1-M', 'NorESM1-ME', 'bcc-csm1-1', 'bcc-csm1-1-m', 'fio-esm',\
+       'inmcm4']
+    markers =["o","v","^","<",">","8","s","p","*","h","H","D","d"]#,"P","X"]
+    Lm = len(markers)
+    d={}
+    i=0
+    colors = [cm.Set1(i/9.) for i in range(9)]+[cm.Set2(i/9.) for i in range(9)]+[cm.Set3(i/9.) for i in range(9)]
+    Lc = len(colors)
+    for i in range(len(models)):
+        model =models[i]
+        d[model]= {}
+        d[model]["color"]=colors[np.mod(i,Lc)]
+        d[model]["marker"]=markers[np.mod(i,Lm)]
+    d["Can*"]=d["CanESM2"]
+    d["CanAM4"]=d["CanESM2"]
+    d["HadGEM2-A*"]=d["HadGEM2-AO"]
+    d["HadGEM2-A"]=d["HadGEM2-AO"]
+    return d
+        
+def scatterplot_cmip(X,Y):
+    """
+    Scatterplot the arrays X and Y.  If ensemble_average, just plot.  Otherwise, group ensemble members by model.  X and Y must be of the same length and have the same model axes.
+    """
+    if len(cmip5.models(X)[0].split("."))==1:
+        ensemble_average=True
+    else:
+        ensemble_average=False
+    markers = model_dictionary()
+    if not ensemble_average:
+        ed = cmip5.ensemble_dictionary(X)
+        models = sorted(ed.keys())
+        for i in range(len(models)):
+            
+            model = models[i]
+            print model
+            c = markers[model]["color"]
+            marker=markers[model]["marker"]
+            plt.plot(X.asma()[ed[models[i]]],Y.asma()[ed[models[i]]], marker,markersize=10,color=c,label=models[i])
+    else:
+        models = cmip5.models(X)
+        for i in range(len(models)):
+            model = models[i]
+            c = markers[model]["color"]
+            marker=markers[model]["marker"]
+            plt.plot([X[i]],[Y[i]], marker,markersize=10,color=c,label=models[i])

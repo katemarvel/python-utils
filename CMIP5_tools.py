@@ -200,7 +200,83 @@ def get_datafiles(forcing,variable,realm="atm"):
 
 
 def boring(x):
-    return x   
+    return x
+
+def ensemble_dictionary(X):
+    
+    allfiles = np.array(sorted(eval(X.getAxis(0).models)))
+    models = np.unique([x.split(".")[1] for x in allfiles])
+    #nmod = len(models)
+    
+    for model in sorted(models):
+        ensemble_dictionary={}
+    for model in sorted(models):
+         #separate GISS-E2-R p1 and p3
+        if model == "GISS-E2-R":
+            isgiss=np.array([x.find("GISS-E2-R.")>=0 for x in allfiles])
+            isp3 = np.array([x.find("i1p3.")>=0 for x in allfiles])
+            isp1 = np.array([x.find("i1p1.")>=0 for x in allfiles])
+            ensemble_dictionary["GISS-E2-R*p3"] = np.where(np.logical_and(isgiss,isp3))[0]
+            ensemble_dictionary["GISS-E2-R*p1"] =  np.where(np.logical_and(isgiss,isp1))[0]
+        elif model == "GISS-E2-H":
+            isgiss=np.array([x.find("GISS-E2-H.")>=0 for x in allfiles])
+            isp3 = np.array([x.find("i1p3.")>=0 for x in allfiles])
+            isp1 = np.array([x.find("i1p1.")>=0 for x in allfiles])
+             #separate GISS-E2-H p1 and p3
+            
+            ensemble_dictionary["GISS-E2-H*p3"] = np.where(np.logical_and(isgiss,isp3))[0]
+            ensemble_dictionary["GISS-E2-H*p1"] =np.where(np.logical_and(isgiss,isp1))[0]
+        else:
+            ensemble_dictionary[model]=np.where(np.array([x.find("."+model+".")>=0 for x in allfiles]))[0]
+    return ensemble_dictionary
+        
+def ensemble2multimodel(X):
+
+    allfiles = np.array(eval(X.getAxis(0).models))
+    models = np.unique([x.split(".")[1] for x in allfiles])
+    #nmod = len(models)
+    
+    for model in sorted(models):
+        ensemble_dictionary={}
+    for model in sorted(models):
+         #separate GISS-E2-R p1 and p3
+        if model == "GISS-E2-R":
+            isgiss=np.array([x.find("GISS-E2-R.")>=0 for x in allfiles])
+            isp3 = np.array([x.find("i1p3.")>=0 for x in allfiles])
+            isp1 = np.array([x.find("i1p1.")>=0 for x in allfiles])
+            ensemble_dictionary["GISS-E2-R*p3"] = np.where(np.logical_and(isgiss,isp3))[0]
+            ensemble_dictionary["GISS-E2-R*p1"] =  np.where(np.logical_and(isgiss,isp1))[0]
+        elif model == "GISS-E2-H":
+            isgiss=np.array([x.find("GISS-E2-H.")>=0 for x in allfiles])
+            isp3 = np.array([x.find("i1p3")>=0 for x in allfiles])
+            isp1 = np.array([x.find("i1p1")>=0 for x in allfiles])
+             #separate GISS-E2-H p1 and p3
+            
+            ensemble_dictionary["GISS-E2-H*p3"] = np.where(np.logical_and(isgiss,isp3))[0]
+            ensemble_dictionary["GISS-E2-H*p1"] =np.where(np.logical_and(isgiss,isp1))[0]
+        else:
+            ensemble_dictionary[model]=np.where(np.array([x.find("."+model+".")>=0 for x in allfiles]))[0]
+    effective_models = sorted(ensemble_dictionary.keys())
+    nmod = len(effective_models)
+    MMA = MV.zeros((nmod,)+X.shape[1:])
+
+    for i in range(nmod):
+        key = effective_models[i]
+        ensemble = ensemble_dictionary[key]
+        nens = len(ensemble)
+        ENS = MV.zeros((nens,)+X.shape[1:])+1.e20
+        for j in range(nens):
+            ENS[j]=X.asma()[ensemble[j]]
+        MMA[i]=MV.average(ENS,axis=0)
+    modax = make_model_axis(effective_models)
+    MMA.setAxis(0,modax)
+    for i in range(len(X.shape))[1:]:
+        MMA.setAxis(i,X.getAxis(i))
+    return MMA
+
+        
+def models(X):
+    return eval(X.getAxis(0).models)
 def multimodel_average(direc,variable,*args,**kwargs):
     """multimodel average over all files in directory that match search string (default *).  Apply func to data (default identity)"""
     #default values:
@@ -387,15 +463,17 @@ def all_clim_sens():
     cs = open(curdir+"clim_sens.txt")
     lns = cs.readlines()
     cs.close()
-    models = np.array([string.lower(x.split("\t")[0]).replace("_","-") for x in lns[2:]])
-    
+    models = np.array([x.split("\t")[0].replace("_","-") for x in lns[2:]])
+    newmodels = []
     sens = [x.split("\t")[2].split("\n")[0] for x in lns[2:]]
     thesens = []
     for ecs in sens:
         if ecs != "":
             #print ecs
             thesens += [float(ecs)/2.]
-            
+            newmodels += [models[sens.index(ecs)]]
+    thesens = MV.array(thesens)
+    thesens.setAxis(0,make_model_axis(newmodels))        
     return thesens
 
 
