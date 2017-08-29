@@ -58,12 +58,12 @@ def get_latest_version(listoffiles):
     return listoffiles[i]
 
 
-def only_most_recent(allfiles_nover):
+def only_most_recent(allfiles_nover,suffix="nc"):
     #version control: take only the newest version of each file in a list of files (on crunchy)
     allfiles = []
     uniq=np.unique([x.split(".ver")[0] for x in allfiles_nover])
     for stem in uniq:
-        fnames = glob.glob(stem+"*")
+        fnames = glob.glob(stem+"*"+suffix)
         allfiles+=[get_latest_version(fnames)]
     return allfiles
 
