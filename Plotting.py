@@ -265,7 +265,7 @@ def plot_all_lats(x,**kwargs):
         
 def time_plot(x,**kwargs):
     """ plot a cdms time series """
-    t = get_plottable_time(x)
+    t = cmip5.get_plottable_time(x)
     plt.plot(t,x.asma(),**kwargs)
 def label_theta_ticks(ax):
     months = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]
