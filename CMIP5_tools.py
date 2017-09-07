@@ -58,12 +58,12 @@ def get_latest_version(listoffiles):
     return listoffiles[i]
 
 
-def only_most_recent(allfiles_nover,suffix="xml"):
+def only_most_recent(allfiles_nover):
     #version control: take only the newest version of each file in a list of files (on crunchy)
     allfiles = []
     uniq=np.unique([x.split(".ver")[0] for x in allfiles_nover])
     for stem in uniq:
-        fnames = glob.glob(stem+"*"+suffix)
+        fnames = glob.glob(stem+"*")
         allfiles+=[get_latest_version(fnames)]
     return allfiles
 
@@ -467,11 +467,12 @@ def all_clim_sens():
     newmodels = []
     sens = [x.split("\t")[2].split("\n")[0] for x in lns[2:]]
     thesens = []
-    for ecs in sens:
+    for i in range(len(sens)):
+        ecs = sens[i]
         if ecs != "":
-            #print ecs
+            
             thesens += [float(ecs)/2.]
-            newmodels += [models[sens.index(ecs)]]
+            newmodels += [models[i]]
     thesens = MV.array(thesens)
     thesens.setAxis(0,make_model_axis(newmodels))        
     return thesens
