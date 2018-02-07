@@ -56,9 +56,16 @@ def bmap(X,projection="moll",**kwargs):
     """ quick plot of data on a lat,lon grid """
    # lon = X.getLongitude()[:]
     #lat = X.getLatitude()[:]
+    
     lon = X.getLongitude().getBounds()[:,0]
     lat = X.getLatitude().getBounds()[:,0]
-    m = Basemap(lon_0=np.median(lon),projection=projection)
+    
+    if not ("lon_0" in kwargs.keys()):
+        lon_0=np.median(lon)
+    else:
+        lon_0=kwargs.pop("lon_0")
+        X,lon = shiftgrid(180,X,lon,start=False)
+    m = Basemap(lon_0=lon_0,projection=projection)
     
         
     x,y=m(*np.meshgrid(lon,lat))
@@ -308,7 +315,7 @@ def model_dictionary():
        'GISS-E2-R*p1', 'GISS-E2-R*p3', 'GISS-E2-R-CC', 'HadCM3',\
        'HadGEM2-AO', 'HadGEM2-CC', 'HadGEM2-ES', 'IPSL-CM5A-LR',\
        'IPSL-CM5A-MR', 'IPSL-CM5B-LR', 'MIROC-ESM', 'MIROC-ESM-CHEM',\
-       'MIROC4h', 'MIROC5', 'MPI-ESM-LR', 'MPI-ESM-MR', 'MPI-ESM-P',\
+       'MIROC4h', 'MIROC5', 'MPI-ESM-LR', 'MPI-ESM-MR', 'MPI-ESM-P','MRI-CGCM3',\
        'NorESM1-M', 'NorESM1-ME', 'bcc-csm1-1', 'bcc-csm1-1-m', 'fio-esm',\
        'inmcm4']
     markers =["o","v","^","<",">","8","s","p","*","h","H","D","d"]#,"P","X"]
