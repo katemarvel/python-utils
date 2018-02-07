@@ -244,16 +244,19 @@ def ensemble2multimodel(X):
             isgiss=np.array([x.find("GISS-E2-R.")>=0 for x in allfiles])
             isp3 = np.array([x.find("i1p3.")>=0 for x in allfiles])
             isp1 = np.array([x.find("i1p1.")>=0 for x in allfiles])
-            ensemble_dictionary["GISS-E2-R*p3"] = np.where(np.logical_and(isgiss,isp3))[0]
-            ensemble_dictionary["GISS-E2-R*p1"] =  np.where(np.logical_and(isgiss,isp1))[0]
+            if len(np.where(isp3)[0]) >0:
+                ensemble_dictionary["GISS-E2-R*p3"] = np.where(np.logical_and(isgiss,isp3))[0]
+            if len(np.where(isp1)[0]) >0:
+                ensemble_dictionary["GISS-E2-R*p1"] =  np.where(np.logical_and(isgiss,isp1))[0]
         elif model == "GISS-E2-H":
             isgiss=np.array([x.find("GISS-E2-H.")>=0 for x in allfiles])
             isp3 = np.array([x.find("i1p3")>=0 for x in allfiles])
             isp1 = np.array([x.find("i1p1")>=0 for x in allfiles])
              #separate GISS-E2-H p1 and p3
-            
-            ensemble_dictionary["GISS-E2-H*p3"] = np.where(np.logical_and(isgiss,isp3))[0]
-            ensemble_dictionary["GISS-E2-H*p1"] =np.where(np.logical_and(isgiss,isp1))[0]
+            if len(np.where(isp3)[0]) >0:
+                ensemble_dictionary["GISS-E2-H*p3"] = np.where(np.logical_and(isgiss,isp3))[0]
+            if len(np.where(isp1)[0]) >0:
+                ensemble_dictionary["GISS-E2-H*p1"] =np.where(np.logical_and(isgiss,isp1))[0]
         else:
             ensemble_dictionary[model]=np.where(np.array([x.find("."+model+".")>=0 for x in allfiles]))[0]
     effective_models = sorted(ensemble_dictionary.keys())
@@ -495,8 +498,24 @@ def landfrac(fname):
             return get_latest_version(candidates)
         else:
             raise TypeError("Can't find matching landfrac")
-
-def get_linear_trends(X,significance=None):
+def glacierfrac(fname):
+    model = fname.split(".")[1]
+    experiment = fname.split(".")[2]
+    if experiment == "amip":
+        if model == "CanAM4":
+            model = 'CanESM2'
+    land_direc = "/work/cmip5/fx/fx/sftgif/"
+    candidates = glob.glob(land_direc+"*"+model+".*"+experiment+".*")
+    if len(candidates)>0:
+        return get_latest_version(candidates)
+    else:
+       
+        candidates = glob.glob(land_direc+"*"+model+".*")
+        if len(candidates)>0:
+            return get_latest_version(candidates)
+        else:
+            raise TypeError("Can't find matching glacier frac")
+def get_linear_trends(X,significance=None,verbose=False):
     units = X.getTime().units
     if units.find("day")>=0:
         fac = 3650. # 3650 days in a decade
@@ -507,6 +526,8 @@ def get_linear_trends(X,significance=None):
     else:
         fac = 1.
         print "WARNING: Undetermined time units"
+    if verbose:
+        print "FACTOR IS "+str(fac)
     ti=X.getAxisIds().index('time')
     if significance is None:
         trends = genutil.statistics.linearregression(X,axis=ti,nointercept=1)*fac
