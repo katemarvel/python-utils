@@ -414,7 +414,12 @@ def time_anomalies(data,start=None,stop=None):
     anom=cdms_clone(data.asma()-clim_exp,data)
     return anom
     
-    
+def version_num(fname):
+    v = fname.split("ver-")[1].split(".")[0]
+    if v[0]=='v':
+        return int(v[1:])
+    else:
+        return int(v)    
 def get_corresponding_file(fname,targetvari):
     """ Match filename with corresponding xml with variable targetvari """
     vari =fname.split(".")[7]
