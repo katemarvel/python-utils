@@ -353,8 +353,7 @@ def multimodel_average(direc,variable,*args,**kwargs):
     
     MMA.setAxisList([modax]+data_axes)
     return MMA
-    
-    
+        
     
 def get_ensemble(direc,variable,*args,**kwargs):
     """get all files in directory that match search string (default *).  Apply func to data (default identity)"""
@@ -416,7 +415,21 @@ def time_anomalies(data,start=None,stop=None):
     return anom
     
     
-
+def get_corresponding_file(fname,targetvari):
+    """ Match filename with corresponding xml with variable targetvari """
+    vari =fname.split(".")[7]
+    if len(glob.glob(fname.replace(vari,targetvari))) == 1:
+        return glob.glob(fname.replace(vari,targetvari))[0]
+    else:
+        fnames = glob.glob(fname.replace(vari,targetvari).split(".ver")[0]+"*")
+        if len(fnames)>0:
+            i = np.argmax(map(version_num,fnames))
+            return fnames[i]
+        else:
+            possmats = glob.glob(fname.replace(vari,targetvari).split("cmip5.")[0]+"*")
+            return difflib.get_close_matches(fname,possmats)[0]
+    
+    
 def clim_sens(model,verbose=False):
     """ get the climate sensitivity"""
     curdir=__file__.split("CMIP5_tools.py")[0]
