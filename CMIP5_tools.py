@@ -4,7 +4,7 @@ import sys
 import os
 import numpy as np
 import string
-
+import difflib
 
 ### Import things from cdutil
 import MV2 as MV
