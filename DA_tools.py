@@ -24,6 +24,8 @@ from mpl_toolkits.basemap import Basemap
 import matplotlib.cm as cm
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
+import CMIP5_tools as cmip5
+
 import matplotlib.mlab as mlab
 
 ### Set classic Netcdf (ver 3)
@@ -42,9 +44,12 @@ def concatenate_this(piC,modaxis=0):
     nmodc = dimensions[modaxis]
     ntc = dimensions[timeaxis]
     newdim = (nmodc*ntc,)
-    
+
+    units = 'days since 0001-1-1'
+    start = cdtime.comptime(0001,1,1)
     tax = cdms.createAxis(np.arange(0,nmodc*ntc*365,365)+15.5)
-    tax.units = 'days since 0001-1-1'
+    #tax = cdms.createAxis([start.add(i,cdtime.Months).torel(units).value for i in range(ntc*nmodc)])
+    tax.units = units
     tax.id = "time"
     tax.designateTime()
     newaxes = [tax]
@@ -81,7 +86,7 @@ def get_slopes(c,yrs,plot = False):
             slope0,intercept0 = genutil.statistics.linearregression(ctrunc)
             slope = slope0*3650.
             if plot:
-                xax = get_plottable_time(ctrunc)
+                xax = cmip5.get_plottable_time(ctrunc)
                 plt.plot(xax,ctrunc.asma(),color = cm.RdYlBu(float(start/yrs)/Ntot))
                 plt.plot(xax,float(slope0)*ctrunc.getTime()[:]+float(intercept0),color ="k",linewidth = 3)
             trends = np.append(trends,slope)

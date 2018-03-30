@@ -517,6 +517,7 @@ def landfrac(fname):
         else:
             raise TypeError("Can't find matching landfrac")
 def glacierfrac(fname):
+
     model = fname.split(".")[1]
     experiment = fname.split(".")[2]
     if experiment == "amip":
