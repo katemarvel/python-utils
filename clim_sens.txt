@@ -1,7 +1,7 @@
 MODEL	ECS (4xCO2)	
 		TIM	MARK
 ACCESS1-0	7.66	7.71
-access1_3		7.12
+ACCESS1-3		7.12
 bcc-csm1-1-m	5.73	5.82
 bcc-csm1-1	5.65	5.67
 BNU-ESM		8.09

@@ -420,7 +420,7 @@ def version_num(fname):
         return int(v[1:])
     else:
         return int(v)    
-def get_corresponding_file(fname,targetvari):
+def get_corresponding_file(fname,targetvari,approximate=False):
     """ Match filename with corresponding xml with variable targetvari """
     vari =fname.split(".")[7]
     if len(glob.glob(fname.replace(vari,targetvari))) == 1:
@@ -431,8 +431,11 @@ def get_corresponding_file(fname,targetvari):
             i = np.argmax(map(version_num,fnames))
             return fnames[i]
         else:
-            possmats = glob.glob(fname.replace(vari,targetvari).split("cmip5.")[0]+"*")
-            return difflib.get_close_matches(fname,possmats)[0]
+            if approximate:
+                possmats = glob.glob(fname.replace(vari,targetvari).split("cmip5.")[0]+"*")
+                return difflib.get_close_matches(fname,possmats)[0]
+            else:
+                return None
     
     
 def clim_sens(model,verbose=False):
@@ -465,6 +468,8 @@ def clim_sens(model,verbose=False):
 
 
 def make_model_axis(listoffiles,just_modelnames = False):
+    if  (type(listoffiles))==type(np.array([])):
+        listoffiles=listoffiles.tolist()
     ax = cdms.createAxis(range(len(listoffiles)))
     ax.id = "model"
     ax.name="model"
