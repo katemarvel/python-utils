@@ -41,7 +41,27 @@ else:
 #                                                              #
 ################################################################
 
-
+def version_num(fname):
+    v = fname.split("ver-")[1].split(".")[0]
+    if v[0]=='v':
+        return int(v[1:])
+    else:
+        return int(v)    
+def get_corresponding_file(fname,targetvari):
+    """ Match filename with corresponding xml with variable targetvari """
+    vari =fname.split(".")[7]
+    if len(glob.glob(fname.replace(vari,targetvari))) == 1:
+        return glob.glob(fname.replace(vari,targetvari))[0]
+    else:
+        fnames = glob.glob(fname.replace(vari,targetvari).split(".ver")[0]+"*")
+        if len(fnames)>0:
+            i = np.argmax(map(version_num,fnames))
+            return fnames[i]
+        else:
+            possmats = glob.glob(fname.replace(vari,targetvari).split("cmip5.")[0]+"*")
+            return difflib.get_close_matches(fname,possmats)[0]
+    
+    
 
 def get_latest_version(listoffiles):
     """ on crunchy: find the latest version of a list of files. Returns single file. """
@@ -237,35 +257,32 @@ def ensemble2multimodel(X):
     #nmod = len(models)
     
     for model in sorted(models):
-        ensemble_dictionary={}
+        e_dict={}
     for model in sorted(models):
          #separate GISS-E2-R p1 and p3
         if model == "GISS-E2-R":
             isgiss=np.array([x.find("GISS-E2-R.")>=0 for x in allfiles])
             isp3 = np.array([x.find("i1p3.")>=0 for x in allfiles])
             isp1 = np.array([x.find("i1p1.")>=0 for x in allfiles])
-            if len(np.where(isp3)[0]) >0:
-                ensemble_dictionary["GISS-E2-R*p3"] = np.where(np.logical_and(isgiss,isp3))[0]
-            if len(np.where(isp1)[0]) >0:
-                ensemble_dictionary["GISS-E2-R*p1"] =  np.where(np.logical_and(isgiss,isp1))[0]
+            e_dict["GISS-E2-R*p3"] = np.where(np.logical_and(isgiss,isp3))[0]
+            e_dict["GISS-E2-R*p1"] =  np.where(np.logical_and(isgiss,isp1))[0]
         elif model == "GISS-E2-H":
             isgiss=np.array([x.find("GISS-E2-H.")>=0 for x in allfiles])
             isp3 = np.array([x.find("i1p3")>=0 for x in allfiles])
             isp1 = np.array([x.find("i1p1")>=0 for x in allfiles])
              #separate GISS-E2-H p1 and p3
-            if len(np.where(isp3)[0]) >0:
-                ensemble_dictionary["GISS-E2-H*p3"] = np.where(np.logical_and(isgiss,isp3))[0]
-            if len(np.where(isp1)[0]) >0:
-                ensemble_dictionary["GISS-E2-H*p1"] =np.where(np.logical_and(isgiss,isp1))[0]
+            
+            e_dict["GISS-E2-H*p3"] = np.where(np.logical_and(isgiss,isp3))[0]
+            e_dict["GISS-E2-H*p1"] =np.where(np.logical_and(isgiss,isp1))[0]
         else:
-            ensemble_dictionary[model]=np.where(np.array([x.find("."+model+".")>=0 for x in allfiles]))[0]
-    effective_models = sorted(ensemble_dictionary.keys())
+            e_dict[model]=np.where(np.array([x.find("."+model+".")>=0 for x in allfiles]))[0]
+    effective_models = sorted(e_dict.keys())
     nmod = len(effective_models)
     MMA = MV.zeros((nmod,)+X.shape[1:])
 
     for i in range(nmod):
         key = effective_models[i]
-        ensemble = ensemble_dictionary[key]
+        ensemble = e_dict[key]
         nens = len(ensemble)
         ENS = MV.zeros((nens,)+X.shape[1:])+1.e20
         for j in range(nens):
@@ -276,19 +293,54 @@ def ensemble2multimodel(X):
     for i in range(len(X.shape))[1:]:
         MMA.setAxis(i,X.getAxis(i))
     return MMA
+def ensembler1(X):
 
+    edict = ensemble_dictionary(X)
+    effective_models = sorted(edict.keys())
+    nmod = len(effective_models)
+    R1 = MV.zeros((nmod,)+X.shape[1:])
+    Xmodels = models(X)
+    for i in range(nmod):
+        key = effective_models[i]
+        ensemble = edict[key]
+        nens = len(ensemble)
+        ENS = MV.zeros((nens,)+X.shape[1:])+1.e20
+        for j in range(nens):
+            ENS[j]=X.asma()[ensemble[j]]
+        R1[i]=ENS[0]
+    modax = make_model_axis(effective_models)
+    R1.setAxis(0,modax)
+    for i in range(len(X.shape))[1:]:
+        R1.setAxis(i,X.getAxis(i))
+    return R1
         
 def models(X):
     return eval(X.getAxis(0).models)
-def multimodel_average(direc,variable,*args,**kwargs):
+def multimodel_average(forcing,variable,*args,**kwargs):
     """multimodel average over all files in directory that match search string (default *).  Apply func to data (default identity)"""
     #default values:
-    search_string = kwargs.pop("search_string","*")
+    # search_string = kwargs.pop("search_string","*")
+    # func = kwargs.pop("func",boring)
+    # verbose = kwargs.pop("verbose",False)
+   
+    # #All files in the directory that match the criteria
+    # allfiles = np.array(glob.glob(direc+search_string))
+
+        #search_string = kwargs.pop("search_string","*")
     func = kwargs.pop("func",boring)
-    verbose = kwargs.pop("verbose",False)
    
     #All files in the directory that match the criteria
-    allfiles = np.array(glob.glob(direc+search_string))
+    #allfiles_nover = np.array(sorted(glob.glob(direc+search_string)))
+
+    #version control: take only the newest 
+    #allfiles =  only_most_recent(allfiles_nover)
+    if "realm" in kwargs.keys():
+        realm=kwargs["realm"]
+    else:
+        realm="atm"
+    allfiles = np.array(get_datafiles(forcing,variable,realm=realm))
+    nfiles = len(allfiles)
+    
     models = np.unique([x.split(".")[1] for x in allfiles])
     ensemble_dictionary={}
     for model in sorted(models):
@@ -353,20 +405,25 @@ def multimodel_average(direc,variable,*args,**kwargs):
     
     MMA.setAxisList([modax]+data_axes)
     return MMA
-        
     
-def get_ensemble(direc,variable,*args,**kwargs):
+    
+    
+def get_ensemble(forcing,variable,*args,**kwargs):
     """get all files in directory that match search string (default *).  Apply func to data (default identity)"""
     #default values:
-    search_string = kwargs.pop("search_string","*")
+    #search_string = kwargs.pop("search_string","*")
     func = kwargs.pop("func",boring)
    
     #All files in the directory that match the criteria
-    allfiles_nover = np.array(sorted(glob.glob(direc+search_string)))
+    #allfiles_nover = np.array(sorted(glob.glob(direc+search_string)))
 
     #version control: take only the newest 
-    allfiles =  only_most_recent(allfiles_nover)
-   
+    #allfiles =  only_most_recent(allfiles_nover)
+    if "realm" in kwargs.keys():
+        realm=kwargs["realm"]
+    else:
+        realm="atm"
+    allfiles = np.array(get_datafiles(forcing,variable,realm=realm))
     nfiles = len(allfiles)
 
     #Get the shape 
@@ -380,6 +437,7 @@ def get_ensemble(direc,variable,*args,**kwargs):
     #Now read in every member of the ensemble
     for i in range(nfiles):
         f=cdms.open(allfiles[i])
+        print i
         try:
             ENSEMBLE[i] = func(f(variable),*args,**kwargs)
             f.close()
@@ -414,30 +472,8 @@ def time_anomalies(data,start=None,stop=None):
     anom=cdms_clone(data.asma()-clim_exp,data)
     return anom
     
-def version_num(fname):
-    v = fname.split("ver-")[1].split(".")[0]
-    if v[0]=='v':
-        return int(v[1:])
-    else:
-        return int(v)    
-def get_corresponding_file(fname,targetvari,approximate=False):
-    """ Match filename with corresponding xml with variable targetvari """
-    vari =fname.split(".")[7]
-    if len(glob.glob(fname.replace(vari,targetvari))) == 1:
-        return glob.glob(fname.replace(vari,targetvari))[0]
-    else:
-        fnames = glob.glob(fname.replace(vari,targetvari).split(".ver")[0]+"*")
-        if len(fnames)>0:
-            i = np.argmax(map(version_num,fnames))
-            return fnames[i]
-        else:
-            if approximate:
-                possmats = glob.glob(fname.replace(vari,targetvari).split("cmip5.")[0]+"*")
-                return difflib.get_close_matches(fname,possmats)[0]
-            else:
-                return None
     
-    
+
 def clim_sens(model,verbose=False):
     """ get the climate sensitivity"""
     curdir=__file__.split("CMIP5_tools.py")[0]
@@ -503,7 +539,23 @@ def all_clim_sens():
     thesens.setAxis(0,make_model_axis(newmodels))        
     return thesens
 
-
+def glacierfrac(fname):
+    model = fname.split(".")[1]
+    experiment = fname.split(".")[2]
+    if experiment == "amip":
+        if model == "CanAM4":
+            model = 'CanESM2'
+    land_direc = "/work/cmip5/fx/fx/sftgif/"
+    candidates = glob.glob(land_direc+"*"+model+".*"+experiment+".*")
+    if len(candidates)>0:
+        return get_latest_version(candidates)
+    else:
+       
+        candidates = glob.glob(land_direc+"*"+model+".*")
+        if len(candidates)>0:
+            return get_latest_version(candidates)
+        else:
+            raise TypeError("Can't find matching glacier frac")
 def landfrac(fname):
     model = fname.split(".")[1]
     experiment = fname.split(".")[2]
@@ -521,27 +573,13 @@ def landfrac(fname):
             return get_latest_version(candidates)
         else:
             raise TypeError("Can't find matching landfrac")
-def glacierfrac(fname):
 
-    model = fname.split(".")[1]
-    experiment = fname.split(".")[2]
-    if experiment == "amip":
-        if model == "CanAM4":
-            model = 'CanESM2'
-    land_direc = "/work/cmip5/fx/fx/sftgif/"
-    candidates = glob.glob(land_direc+"*"+model+".*"+experiment+".*")
-    if len(candidates)>0:
-        return get_latest_version(candidates)
-    else:
-       
-        candidates = glob.glob(land_direc+"*"+model+".*")
-        if len(candidates)>0:
-            return get_latest_version(candidates)
-        else:
-            raise TypeError("Can't find matching glacier frac")
-def get_linear_trends(X,significance=None,verbose=False):
+def get_linear_trends(X,significance=None):
+    
     units = X.getTime().units
-    if units.find("day")>=0:
+    if units.find("hour")>=0:
+        fac = 24*3650 # 87600 hours in a decade
+    elif units.find("day")>=0:
         fac = 3650. # 3650 days in a decade
     elif units.find("month")>=0:
         fac = 120. #120 months in a decade
@@ -550,8 +588,6 @@ def get_linear_trends(X,significance=None,verbose=False):
     else:
         fac = 1.
         print "WARNING: Undetermined time units"
-    if verbose:
-        print "FACTOR IS "+str(fac)
     ti=X.getAxisIds().index('time')
     if significance is None:
         trends = genutil.statistics.linearregression(X,axis=ti,nointercept=1)*fac
