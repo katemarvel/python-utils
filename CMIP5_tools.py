@@ -437,7 +437,7 @@ def get_ensemble(forcing,variable,*args,**kwargs):
     #Now read in every member of the ensemble
     for i in range(nfiles):
         f=cdms.open(allfiles[i])
-        print i
+        
         try:
             ENSEMBLE[i] = func(f(variable),*args,**kwargs)
             f.close()
