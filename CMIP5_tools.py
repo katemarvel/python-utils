@@ -440,13 +440,13 @@ def get_ensemble(forcing,variable,*args,**kwargs):
     for i in range(nfiles):
         f=cdms.open(allfiles[i])
         
-       # try:
-        ENSEMBLE[i] = func(f(variable),*args,**kwargs)
-        f.close()
-        #except:
-         #   print "skipping "+allfiles[i]
-          #  f.close()
-            #continue
+        try:
+            ENSEMBLE[i] = func(f(variable),*args,**kwargs)
+            f.close()
+        except:
+            print "skipping "+allfiles[i]
+            f.close()
+            continue
     ENSEMBLE= MV.masked_where(ENSEMBLE>1.e10,ENSEMBLE)
     modax = cdms.createAxis(np.arange(nfiles).astype(np.float))
     modax.models = str(allfiles)
