@@ -253,6 +253,8 @@ def ensemble_dictionary(X):
 def ensemble2multimodel(X):
 
     allfiles = np.array(eval(X.getAxis(0).models))
+    if len(allfiles)!=X.shape[0]:
+        allfiles = [x+".xml" for x in allfiles[0].split(".xml")[:-1]]
     models = np.unique([x.split(".")[1] for x in allfiles])
     #nmod = len(models)
     
@@ -442,6 +444,7 @@ def get_ensemble(forcing,variable,*args,**kwargs):
             ENSEMBLE[i] = func(f(variable),*args,**kwargs)
             f.close()
         except:
+            print "skipping "+allfiles[i]
             f.close()
             continue
     ENSEMBLE= MV.masked_where(ENSEMBLE>1.e10,ENSEMBLE)
