@@ -446,7 +446,7 @@ def get_ensemble(forcing,variable,*args,**kwargs):
         #except:
          #   print "skipping "+allfiles[i]
           #  f.close()
-            continue
+            #continue
     ENSEMBLE= MV.masked_where(ENSEMBLE>1.e10,ENSEMBLE)
     modax = cdms.createAxis(np.arange(nfiles).astype(np.float))
     modax.models = str(allfiles)
