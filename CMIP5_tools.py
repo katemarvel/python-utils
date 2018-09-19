@@ -264,18 +264,22 @@ def ensemble2multimodel(X):
          #separate GISS-E2-R p1 and p3
         if model == "GISS-E2-R":
             isgiss=np.array([x.find("GISS-E2-R.")>=0 for x in allfiles])
-            isp3 = np.array([x.find("i1p3.")>=0 for x in allfiles])
-            isp1 = np.array([x.find("i1p1.")>=0 for x in allfiles])
-            e_dict["GISS-E2-R*p3"] = np.where(np.logical_and(isgiss,isp3))[0]
-            e_dict["GISS-E2-R*p1"] =  np.where(np.logical_and(isgiss,isp1))[0]
+            isp3 = np.array([x.find("i1p3")>=0 for x in allfiles])
+            isp1 = np.array([x.find("i1p1")>=0 for x in allfiles])
+            if len(np.where(np.logical_and(isgiss,isp3))[0])>0:
+                e_dict["GISS-E2-R*p3"] = np.where(np.logical_and(isgiss,isp3))[0]
+            if len(np.where(np.logical_and(isgiss,isp1))[0]):
+                e_dict["GISS-E2-R*p1"] =  np.where(np.logical_and(isgiss,isp1))[0]
         elif model == "GISS-E2-H":
             isgiss=np.array([x.find("GISS-E2-H.")>=0 for x in allfiles])
+        
             isp3 = np.array([x.find("i1p3")>=0 for x in allfiles])
             isp1 = np.array([x.find("i1p1")>=0 for x in allfiles])
              #separate GISS-E2-H p1 and p3
-            
-            e_dict["GISS-E2-H*p3"] = np.where(np.logical_and(isgiss,isp3))[0]
-            e_dict["GISS-E2-H*p1"] =np.where(np.logical_and(isgiss,isp1))[0]
+            if len(np.where(np.logical_and(isgiss,isp3))[0])>0:
+                e_dict["GISS-E2-H*p3"] = np.where(np.logical_and(isgiss,isp3))[0]
+            if len(np.where(np.logical_and(isgiss,isp1))[0])>0:
+                e_dict["GISS-E2-H*p1"] =np.where(np.logical_and(isgiss,isp1))[0]
         else:
             e_dict[model]=np.where(np.array([x.find("."+model+".")>=0 for x in allfiles]))[0]
     effective_models = sorted(e_dict.keys())

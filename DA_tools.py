@@ -33,16 +33,42 @@ cdms.setNetcdfShuffleFlag(0)
 cdms.setNetcdfDeflateFlag(0)
 cdms.setNetcdfDeflateLevelFlag(0)
 
-def concatenate_this(piC,modaxis=0):
+def concatenate_this(piC,modaxis=0,compressed=False):
     if not ("time" in piC.getAxisIds()):
         print "Need a time axis to concatenate along"
         raise TypeError
-    
+
+   
+        
+   
+    if compressed:
+        axlist = piC.getAxisList()
+        todel=[]
+
+        modax = piC.getAxis(modaxis)
+        allfiles=eval(modax.models)
+        if len(allfiles)!=piC.shape[modaxis]:
+            allfiles =[x+".xml" for x in allfiles[0].split(".xml")[:-1]]
+        
+        allfiles=np.array(allfiles)
+        #assume model axis is 0 for this
+        for i in range(len(allfiles)):
+            if len(piC[i].compressed()) != len(piC[i]):
+                todel+=[i]
+        piC = MV.array(np.delete(piC,todel,axis=modaxis))
+        allfiles = np.delete(allfiles,todel).tolist()
+        newmodax=cmip5.make_model_axis(allfiles)
+        piC.setAxisList([newmodax]+axlist[1:])
+                
+                
     naxes = len(piC.shape)
+    
     timeaxis = piC.getAxisIds().index("time")
     dimensions=piC.shape
     nmodc = dimensions[modaxis]
+
     ntc = dimensions[timeaxis]
+            
     newdim = (nmodc*ntc,)
 
     units = 'days since 0001-1-1'
@@ -109,7 +135,7 @@ def fit_normals_to_data(C,**kwargs):
     if ax is None:
         ax=plt.gca()
     if a is None:
-        a = np.max(C)
+        a = np.max(np.abs(C))
         a = a + 0.5*a
     delta = a/25.
     xc = np.arange(-a,a+delta,delta)
