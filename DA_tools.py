@@ -20,7 +20,7 @@ import scipy.ndimage as ndimag
 
 ### Import plotting routines
 import matplotlib.pyplot as plt
-from mpl_toolkits.basemap import Basemap  
+#from mpl_toolkits.basemap import Basemap  
 import matplotlib.cm as cm
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
@@ -35,7 +35,7 @@ cdms.setNetcdfDeflateLevelFlag(0)
 
 def concatenate_this(piC,modaxis=0,compressed=False):
     if not ("time" in piC.getAxisIds()):
-        print "Need a time axis to concatenate along"
+        print("Need a time axis to concatenate along")
         raise TypeError
 
    
@@ -72,7 +72,7 @@ def concatenate_this(piC,modaxis=0,compressed=False):
     newdim = (nmodc*ntc,)
 
     units = 'days since 0001-1-1'
-    start = cdtime.comptime(0001,1,1)
+    start = cdtime.comptime(1,1,1)
     tax = cdms.createAxis(np.arange(0,nmodc*ntc*365,365)+15.5)
     #tax = cdms.createAxis([start.add(i,cdtime.Months).torel(units).value for i in range(ntc*nmodc)])
     tax.units = units

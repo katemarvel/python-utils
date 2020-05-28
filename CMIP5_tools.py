@@ -123,8 +123,8 @@ def get_common_timeax(fnames,user_specify_historical = False):
             f = cdms.open(fname)
             L += [len(f.getAxis('time'))]
             if len(f.getAxis('time'))<50:
-                print fname
-                print len(f.getAxis('time'))
+                print(fname)
+                print(len(f.getAxis('time')))
             f.close()
             #Maybe this is a stupid assumption, but take all models as starting at the same time.  CHECK THIS
         if len(np.unique(L))>1:
@@ -198,7 +198,7 @@ class HistoricalMisc():
 def get_datafiles(forcing,variable,realm="atm"):
     """ List all files on crunchy corresponding to a variable"""
     if not crunchy:
-        print "Not on crunchy"
+        print("Not on crunchy")
         raise TypeError()
     hm = HistoricalMisc()
     if hasattr(hm,forcing):
@@ -321,7 +321,10 @@ def ensembler1(X):
     return R1
         
 def models(X):
-    return eval(X.getAxis(0).models)
+    allfiles = eval(X.getAxis(0).models)
+    if len(allfiles)!=X.shape[0]:
+        allfiles = [x+".xml" for x in allfiles[0].split(".xml")[:-1]]
+    return allfiles
 def multimodel_average(forcing,variable,*args,**kwargs):
     """multimodel average over all files in directory that match search string (default *).  Apply func to data (default identity)"""
     #default values:
@@ -344,6 +347,7 @@ def multimodel_average(forcing,variable,*args,**kwargs):
         realm=kwargs["realm"]
     else:
         realm="atm"
+    
     allfiles = np.array(get_datafiles(forcing,variable,realm=realm))
     nfiles = len(allfiles)
     
@@ -383,7 +387,7 @@ def multimodel_average(forcing,variable,*args,**kwargs):
     
     MMA = MV.zeros((nmod,)+data_shape)+1.e20
     if verbose:
-        print "MMA shape will be "+str(MMA.shape)
+        print("MMA shape will be "+str(MMA.shape))
     f.close()
     #Now average over each ensemble
     for i in range(nmod):
@@ -395,11 +399,11 @@ def multimodel_average(forcing,variable,*args,**kwargs):
             try:
                 f = cdms.open(ensemble[j])
                 if verbose:
-                    print ensemble[i]
+                    print(ensemble[i])
                 ENS[j]=func(f(variable),*args,**kwargs)
                 f.close()
             except:
-                print ensemble[j] +" has a problem"
+                print(ensemble[j] +" has a problem")
         #ENS = MV.masked_where(ENS>1.e10,ENS)
         MMA[i] = MV.average(ENS,axis=0)
     MMA = MV.masked_where(MMA>1.e10,MMA)
@@ -413,7 +417,7 @@ def multimodel_average(forcing,variable,*args,**kwargs):
     return MMA
     
     
-    
+
 def get_ensemble(forcing,variable,*args,**kwargs):
     """get all files in directory that match search string (default *).  Apply func to data (default identity)"""
     #default values:
@@ -448,7 +452,7 @@ def get_ensemble(forcing,variable,*args,**kwargs):
             ENSEMBLE[i] = func(f(variable),*args,**kwargs)
             f.close()
         except:
-            print "skipping "+allfiles[i]
+            print("skipping "+allfiles[i])
             f.close()
             continue
     ENSEMBLE= MV.masked_where(ENSEMBLE>1.e10,ENSEMBLE)
@@ -496,17 +500,17 @@ def clim_sens(model,verbose=False):
         i=i[0]
         if sens[i]!="":
             if verbose:
-                print "ECS for "+model+" is "+str( float(sens[i])/2.)
+                print("ECS for "+model+" is "+str( float(sens[i])/2.))
             
             return float(sens[i])/2.
         else:
             if verbose:
-                print "No ECS found for "+model
+                print("No ECS found for "+model)
             return np.nan
     else:
         if verbose:
-            print "More than one match for "+model
-            print "Choose one of "+str(models[i])
+            print("More than one match for "+model)
+            print("Choose one of "+str(models[i]))
         return np.nan
 
 
@@ -594,7 +598,7 @@ def get_linear_trends(X,significance=None):
         fac = 10. #10 years in a decade
     else:
         fac = 1.
-        print "WARNING: Undetermined time units"
+        print("WARNING: Undetermined time units")
     ti=X.getAxisIds().index('time')
     if significance is None:
         trends = genutil.statistics.linearregression(X,axis=ti,nointercept=1)*fac

@@ -1,4 +1,14 @@
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 ### Import useful routines
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import range
+from builtins import *
+from builtins import object
 import numpy as np
 import string
 import glob
@@ -22,7 +32,7 @@ import CMIP5_tools as cmip5
 
 ### Import plotting routines
 import matplotlib.pyplot as plt
-from mpl_toolkits.basemap import Basemap  
+from mpl_toolkits.basemap import Basemap, shiftgrid
 import matplotlib.cm as cm
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 #from matplotlib import mpl
@@ -42,7 +52,8 @@ def plotcdms(i,**kwargs):
     """ plot a cdms 1d variable """
     plt.plot(get_plottable_time(i),i.asma(),**kwargs)
 
-def find_ij(data,(xy)):
+def find_ij(data, xxx_todo_changeme):
+    (xy) = xxx_todo_changeme
     lat = data.getLatitude()[:]
     lon = data.getLongitude()[:]
     x=xy[0]
@@ -60,12 +71,12 @@ def bmap(X,projection="moll",**kwargs):
     lon = X.getLongitude().getBounds()[:,0]
     lat = X.getLatitude().getBounds()[:,0]
     
-    if not ("lon_0" in kwargs.keys()):
+    if not ("lon_0" in list(kwargs.keys())):
         lon_0=np.median(lon)
     else:
         lon_0=kwargs.pop("lon_0")
         X,lon = shiftgrid(180,X,lon,start=False)
-    m = Basemap(lon_0=lon_0,projection=projection)
+    m = Basemap(lon_0=lon_0,projection=projection,**kwargs)
     
         
     x,y=m(*np.meshgrid(lon,lat))
@@ -75,7 +86,7 @@ def bmap(X,projection="moll",**kwargs):
      #   m.pcolor(x,y,X,vmin=vmin,vmax=vmax)
     return m
 
-class InteractiveMap():
+class InteractiveMap(object):
     def __init__(self,data,proj="moll",typ="clim",fix_colorbar = True,**kwargs):
        # matplotlib.rcParams["backend"]="TkAgg"
 
@@ -134,7 +145,7 @@ class InteractiveMap():
         self.key = event.key
         #print self.key
         if self.key == "c":
-            print "CLEARING ALL"
+            print("CLEARING ALL")
             [x.set_visible(False) for x in self.stars]
             [plt.close(fig) for fig in self.figs]
             self.fig.canvas.draw()
@@ -143,15 +154,15 @@ class InteractiveMap():
         if self.key == "d":
             self.fig.canvas.mpl_disconnect(self.cid)
         if self.key == "z":
-            print "ZOOM MODE ON"
+            print("ZOOM MODE ON")
             self.fig.canvas.mpl_disconnect(self.cid)
             self.cid = self.fig.canvas.mpl_connect('button_press_event',self.zoom)
         if self.key == "o":
-            print "ZOOM MODE OFF"
+            print("ZOOM MODE OFF")
             self.fig.canvas.mpl_disconnect(self.cid)
             self.cid = self.fig.canvas.mpl_connect('button_press_event',self.onclick)
         if self.key == "r":
-            print "RESETTING"
+            print("RESETTING")
             self.fig.canvas.mpl_disconnect(self.cid)
             self.ax.set_xlim(self.xlim)
             self.ax.set_ylim(self.ylim)
@@ -210,7 +221,7 @@ class InteractiveMap():
         self.fig.canvas.draw_idle()
 
 
-from mpl_toolkits.basemap import Basemap,shiftgrid
+#from mpl_toolkits.basemap import Basemap,shiftgrid
 # def bmap(X,**kwargs):
 #     """ quick plot of data on a lat,lon grid """
 #     lon = X.getLongitude()[:]
@@ -258,10 +269,12 @@ def cmap(X,**kwargs):
     return m
 
 
-def lat_plot(x,**kwargs):
+def lat_plot(x,ax=None,**kwargs):
     """plot a cdms zonal average"""
     lat = x.getLatitude()[:]
-    plt.plot(lat,x.asma(),**kwargs)
+    if ax is None:
+        ax=plt.gca()
+    ax.plot(lat,x.asma(),**kwargs)
 
 def plot_all_lats(x,**kwargs):
     cmap = kwargs.pop("cmap",cm.RdYlBu)
@@ -270,13 +283,16 @@ def plot_all_lats(x,**kwargs):
         lat = x.getLatitude()[:]
         plt.plot(lat,x[i].asma(),color=cmap(i/float(nt)))
         
-def time_plot(x,**kwargs):
+def time_plot(x,ax=None,**kwargs):
     """ plot a cdms time series """
     t = cmip5.get_plottable_time(x)
-    plt.plot(t,x.asma(),**kwargs)
+    if ax is None:
+        ax=plt.gca()
+    
+    ax.plot(t,x.asma(),**kwargs)
 def label_theta_ticks(ax):
     months = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]
-    monthstarts = np.array([cdtime.comptime(0001,x,1).torel("days since 0001-1-1").value for x in np.arange(12)+1])/365. *2*np.pi
+    monthstarts = np.array([cdtime.comptime(0o001,x,1).torel("days since 0001-1-1").value for x in np.arange(12)+1])/365. *2*np.pi
     ax.set_xticks(monthstarts)
     ax.set_xticklabels(months)
 
@@ -300,7 +316,7 @@ def prep_for_talk(ax):
     try:
         ax.legend_.get_frame().set_alpha(0.3)
     except:
-        print "no legend"
+        print("no legend")
     ax.title.set_color("w")
 
     plt.draw()
@@ -350,7 +366,7 @@ def scatterplot_cmip(X,Y):
         for i in range(len(models)):
             
             model = models[i]
-            print model
+            print(model)
             c = markers[model]["color"]
             marker=markers[model]["marker"]
             plt.plot(X.asma()[ed[models[i]]],Y.asma()[ed[models[i]]], marker,markersize=10,color=c,label=models[i])
